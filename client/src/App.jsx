@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import TaskForm from "./components/TaskForm";
 import TaskList from "./components/TaskList";
+import SearchBar from "./components/SearchBar";
 import "./App.css";
 
 function App() {
@@ -12,6 +13,7 @@ function App() {
 
   const [categoryInput, setCategoryInput] = useState("Personal");
   const [filter, setFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     localStorage.setItem("tasks", JSON.stringify(tasks));
@@ -59,9 +61,16 @@ function App() {
   };
 
   const filteredTasks = tasks.filter((task) => {
-    if (filter === "active") return !task.completed;
-    if (filter === "completed") return task.completed;
-    return true;
+    const matchesFilter =
+      filter === "all" ||
+      (filter === "active" && !task.completed) ||
+      (filter === "completed" && task.completed);
+    const cleanSearch = searchQuery.toLowerCase();
+    const matchesSearch =
+      task.text.toLowerCase().includes(cleanSearch) ||
+      task.category.toLowerCase().includes(cleanSearch);
+
+    return matchesFilter && matchesSearch;
   });
 
   return (
@@ -76,6 +85,8 @@ function App() {
         setCategoryInput={setCategoryInput}
       />
       {/* Filter buttons Control Panel*/}
+      <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+
       <div className="filter-container">
         <button
           className={`filter-btn ${filter === "all" ? "active-filter" : ""}`}
