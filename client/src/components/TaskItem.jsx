@@ -15,6 +15,20 @@ function TaskItem({ task, onToggleComplete, onDeleteTask, onUpdateTask }) {
     setIsEditing(false);
   };
 
+  const checkOverdue = () => {
+    if (!task.dueDate || task.completed) return false;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const dueDateObj = new Date(task.dueDate);
+    dueDateObj.setHours(0, 0, 0, 0);
+
+    return dueDateObj < today;
+  };
+
+  const isOverdue = checkOverdue();
+
   return (
     <li className="listItem">
       <div className="taskContent">
@@ -46,11 +60,33 @@ function TaskItem({ task, onToggleComplete, onDeleteTask, onUpdateTask }) {
               {task.text}
             </span>
             {/* Category Task badge */}
-            <span
-              className={`category-badge ${task.category?.toLowerCase() || "personal"}`}
+            <div
+              style={{
+                display: "flex",
+                gap: "6px",
+                alignItems: "center",
+                flexWrap: "wrap",
+              }}
             >
-              {task.category || "Personal"}
-            </span>
+              {/* Created date badge */}
+              <span className="created-badge">
+                {task.createdAt || "Just Now"}
+              </span>
+
+              {/* Category badge */}
+              <span
+                className={`category-badge ${task.category?.toLowerCase() || "personal"}`}
+              >
+                {task.category || "Personal"}
+              </span>
+
+              {/* Due date badge */}
+              {task.dueDate && (
+                <span className={`date-badge ${isOverdue ? "overdue" : ""}`}>
+                  Due: {task.dueDate} {isOverdue && "(Overdue)"}
+                </span>
+              )}
+            </div>
           </div>
         )}
       </div>

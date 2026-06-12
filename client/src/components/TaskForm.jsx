@@ -5,6 +5,8 @@ function TaskForm({
   setTaskInput,
   categoryInput,
   setCategoryInput,
+  dateInput,
+  setDateInput,
   onAddTask,
 }) {
   return (
@@ -25,6 +27,13 @@ function TaskForm({
         <option value="Work">Work</option>
         <option value="Shopping">Shopping</option>
       </select>
+
+      <input
+        type="date"
+        value={dateInput}
+        onChange={(e) => setDateInput(e.target.value)}
+        className="date-input"
+      />
       <button type="submit" className="addButton">
         Add Task
       </button>
