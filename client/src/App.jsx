@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
 import TaskForm from "./components/TaskForm";
 import TaskList from "./components/TaskList";
 import SearchBar from "./components/SearchBar";
 import TaskStats from "./components/TaskStats";
 import "./App.css";
 
+const API_URL = "http://localhost:5000/api/tasks";
+
 function App() {
-  const [tasks, setTasks] = useState(() => {
-    const savedTasks = localStorage.getItem("tasks");
-    return savedTasks ? JSON.parse(savedTasks) : [];
-  });
+  const [tasks, setTasks] = useState([]);
   const [taskInput, setTaskInput] = useState("");
   const [categoryInput, setCategoryInput] = useState("Personal");
   const [dateInput, setDateInput] = useState("");
@@ -18,10 +18,18 @@ function App() {
   const [sortBy, setSortBy] = useState("Newest");
 
   useEffect(() => {
-    localStorage.setItem("tasks", JSON.stringify(tasks));
-  }, [tasks]);
+    const fetchTasks = async () => {
+      try {
+        const response = await axios.get(API_URL);
+        setTasks(response.data);
+      } catch (error) {
+        console.error("Error fetching task: ", error);
+      }
+    };
+    fetchTasks();
+  }, []);
 
-  const handleTaskInput = (e) => {
+  const handleTaskInput = async (e) => {
     e.preventDefault();
 
     if (taskInput.trim() === "") return;
@@ -33,7 +41,7 @@ function App() {
       year: "numeric",
     });
 
-    const newTask = {
+    const newTaskData = {
       id: Date.now(),
       text: taskInput,
       category: categoryInput,
@@ -41,35 +49,58 @@ function App() {
       createdAt: formattedCreatedDate,
       completed: false,
     };
-    setTasks([...tasks, newTask]);
-    setTaskInput("");
-    setCategoryInput("Personal");
-    setDateInput("");
+
+    try {
+      const response = await axios.post(API_URL, newTaskData);
+      setTasks([...tasks, response.data]);
+      setTaskInput("");
+      setCategoryInput("Personal");
+      setDateInput("");
+    } catch (error) {
+      console.error("Error creating task: ", error);
+    }
   };
 
-  const handleTaskComplete = (idToToggle) => {
-    const updatedTasks = tasks.map((task) => {
-      if (task.id === idToToggle) {
-        return { ...task, completed: !task.completed };
-      }
-      return task;
-    });
-    setTasks(updatedTasks);
+  const handleTaskComplete = async (idToToggle) => {
+    const targetTask = tasks.find((task) => task.id === idToToggle);
+    if (!targetTask) return;
+
+    try {
+      await axios.put(`${API_URL}/${idToToggle}`, {
+        completed: !targetTask.completed,
+      });
+
+      const updatedTasks = tasks.map((task) =>
+        task.id === idToToggle ? { ...task, completed: !task.completed } : task,
+      );
+      setTasks(updatedTasks);
+    } catch (error) {
+      console.error("Error updating task status: ", error);
+    }
   };
 
-  const handleDeleteTask = (idToDelete) => {
-    const updatedTasks = tasks.filter((task) => task.id !== idToDelete);
-    setTasks(updatedTasks);
+  const handleDeleteTask = async (idToDelete) => {
+    try {
+      await axios.delete(`${API_URL}/${idToDelete}`);
+      const updatedTasks = tasks.filter((task) => task.id !== idToDelete);
+      setTasks(updatedTasks);
+    } catch (error) {
+      console.error("Error deleting task: ", error);
+    }
   };
 
-  const handleUpdateTask = (idToUpdate, newText) => {
-    const updatedTasks = tasks.map((task) => {
-      if (task.id === idToUpdate) {
-        return { ...task, text: newText };
-      }
-      return task;
-    });
-    setTasks(updatedTasks);
+  const handleUpdateTask = async (idToUpdate, newText) => {
+    try {
+      const response = await axios.put(`${API_URL}/${idToUpdate}`, {
+        text: newText,
+      });
+      const updatedTasks = tasks.map((task) =>
+        task.id === idToUpdate ? response.data : task,
+      );
+      setTasks(updatedTasks);
+    } catch (error) {
+      console.log("Error updating task text: ", error);
+    }
   };
 
   const processedTasks = tasks
@@ -86,10 +117,10 @@ function App() {
       return matchesFilter && matchesSearch;
     })
     .sort((a, b) => {
-      if (sortBy === "Newest") {
-        return b.id - a.id;
+      if (sortBy === "newest") {
+        return b.id - a.id; // High ID timestamp (newer) moves to the top
       } else {
-        return a.id - b.id;
+        return a.id - b.id; // Low ID timestamp (older) stays at the top
       }
     });
 
