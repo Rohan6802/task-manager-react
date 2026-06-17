@@ -6,7 +6,7 @@ function TaskItem({ task, onToggleComplete, onDeleteTask, onUpdateTask }) {
 
   const handleSave = () => {
     if (editText.trim() === "") return;
-    onUpdateTask(task.id, editText);
+    onUpdateTask(task._id, editText);
     setIsEditing(false);
   };
 
@@ -35,7 +35,7 @@ function TaskItem({ task, onToggleComplete, onDeleteTask, onUpdateTask }) {
         <input
           type="checkbox"
           checked={task.completed || false}
-          onChange={() => onToggleComplete(task.id)}
+          onChange={() => onToggleComplete(task._id)}
           className="checkbox"
           disabled={isEditing}
         />
@@ -140,7 +140,7 @@ function TaskItem({ task, onToggleComplete, onDeleteTask, onUpdateTask }) {
               Edit
             </button>
             <button
-              onClick={() => onDeleteTask(task.id)}
+              onClick={() => onDeleteTask(task._id)}
               className="deleteButton"
             >
               Delete

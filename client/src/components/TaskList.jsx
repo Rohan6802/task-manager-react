@@ -9,7 +9,7 @@ function TaskList({ tasks, onToggleComplete, onDeleteTask, onUpdateTask }) {
     <ul className="list">
       {tasks.map((task) => (
         <TaskItem
-          key={task.id}
+          key={task._id}
           task={task}
           onToggleComplete={onToggleComplete}
           onDeleteTask={onDeleteTask}

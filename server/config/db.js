@@ -1,14 +1,16 @@
-export let tasks = [
-  {
-    id: 1,
-    text: "Learn Node and Express backend basics",
-    category: "work",
-    completed: false,
-    createdAt: "Jun 13, 2026",
-    dueDate: "",
-  },
-];
+import mongoose from "mongoose";
+import dotenv from "dotenv";
 
-export const updateTasks = (newTasksArray) => {
-  tasks = newTasksArray;
+dotenv.config();
+
+const connectDB = async () => {
+  try {
+    const conn = await mongoose.connect(process.env.MONGO_URI);
+    console.log(`MongoDB connected Succesfully: ${conn.Collection.name}`);
+  } catch (error) {
+    console.error(`DataBase connection error: ${error.message}`);
+    process.exit(1);
+  }
 };
+
+export default connectDB;

@@ -52,7 +52,9 @@ function App() {
 
     try {
       const response = await axios.post(API_URL, newTaskData);
-      setTasks([...tasks, response.data]);
+      if (response.data) {
+        setTasks([...tasks, response.data]);
+      }
       setTaskInput("");
       setCategoryInput("Personal");
       setDateInput("");
@@ -62,7 +64,7 @@ function App() {
   };
 
   const handleTaskComplete = async (idToToggle) => {
-    const targetTask = tasks.find((task) => task.id === idToToggle);
+    const targetTask = tasks.find((task) => task._id === idToToggle);
     if (!targetTask) return;
 
     try {
@@ -71,7 +73,9 @@ function App() {
       });
 
       const updatedTasks = tasks.map((task) =>
-        task.id === idToToggle ? { ...task, completed: !task.completed } : task,
+        task._id === idToToggle
+          ? { ...task, completed: !task.completed }
+          : task,
       );
       setTasks(updatedTasks);
     } catch (error) {
@@ -82,7 +86,7 @@ function App() {
   const handleDeleteTask = async (idToDelete) => {
     try {
       await axios.delete(`${API_URL}/${idToDelete}`);
-      const updatedTasks = tasks.filter((task) => task.id !== idToDelete);
+      const updatedTasks = tasks.filter((task) => task._id !== idToDelete);
       setTasks(updatedTasks);
     } catch (error) {
       console.error("Error deleting task: ", error);
@@ -95,7 +99,7 @@ function App() {
         text: newText,
       });
       const updatedTasks = tasks.map((task) =>
-        task.id === idToUpdate ? response.data : task,
+        task._id === idToUpdate ? response.data : task,
       );
       setTasks(updatedTasks);
     } catch (error) {
