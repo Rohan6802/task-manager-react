@@ -4,7 +4,7 @@ import Task from "../models/Task.js";
 //@route Get /api/tasks
 export const getTasks = async (req, res) => {
   try {
-    const tasks = await Task.find();
+    const tasks = await Task.find({ user: req.user._id });
     res.json(tasks);
   } catch (error) {
     res
@@ -24,6 +24,7 @@ export const createTask = async (req, res) => {
     }
 
     const newTask = await Task.create({
+      user: req.user._id,
       text,
       category: category || "Personal",
       dueDate: dueDate || "",
