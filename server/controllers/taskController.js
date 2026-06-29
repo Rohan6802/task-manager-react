@@ -44,16 +44,23 @@ export const createTask = async (req, res) => {
 //@route PUT /api/tasks/:id
 export const updateTask = async (req, res) => {
   try {
-    const taskId = req.params.id;
+    const { id } = req.params;
+    const task = await Task.findById(id);
 
-    const updatedTask = await Task.findByIdAndUpdate(taskId, req.body, {
-      returnDocument: "after",
-      runValidator: true,
-    });
-    if (!updatedTask) {
-      return res.status(400).json({ message: "Taskl not found" });
+    if (!task) {
+      return res.status(404).json({ message: "Task Not Found" });
     }
-    res.status(200).json(updatedTask);
+
+    if (task.user.toString() !== req.user._id.toString()) {
+      return res
+        .status(401)
+        .json({ message: "User not authorised to Update the Task" });
+    }
+    const updatedTask = await Task.findByIdAndUpdate(id, req.body, {
+      returnDocument: "after",
+      runValidators: true,
+    });
+    return res.json(updatedTask);
   } catch (error) {
     console.error("!!! CRITICAL BACKEND ERROR !!! ->", error);
     res
@@ -66,14 +73,21 @@ export const updateTask = async (req, res) => {
 //@route DELETE /api/tasks/:id
 export const deleteTask = async (req, res) => {
   try {
-    const taskId = req.params.id;
-    const deletedTask = await Task.findByIdAndDelete(taskId);
+    const { id } = req.params;
+    const task = await Task.findById(id);
 
-    if (!deletedTask) {
-      return res.status(404).json({ message: "Task Not Found" });
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
     }
 
-    res.json({ message: "Task Successfully removed from cloud storage." });
+    if (task.user.toString() !== req.user._id.toString()) {
+      return res
+        .status(401)
+        .json({ message: "User not authorised to Delete the Task" });
+    }
+
+    await task.deleteOne();
+    res.json({ message: "Task delete successfully", id });
   } catch (error) {
     (res.status(500),
       json({ message: "Server Error Deleting Task", error: error.message }));
