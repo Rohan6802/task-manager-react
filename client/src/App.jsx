@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import TaskForm from "./components/TaskForm";
-import TaskList from "./components/TaskList";
-import SearchBar from "./components/SearchBar";
-import TaskStats from "./components/TaskStats";
+import TaskForm from "./components/tasks/TaskForm";
+import TaskList from "./components/tasks/TaskList";
+import SearchBar from "./components/tasks/SearchBar";
+import TaskStats from "./components/tasks/TaskStats";
+import Login from "./components/auth/Login";
+import Register from "./components/auth/Register";
 import "./App.css";
 
 const API_URL = "http://localhost:5000/api/tasks";
@@ -16,18 +18,24 @@ function App() {
   const [filter, setFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("Newest");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
 
   useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const response = await axios.get(API_URL);
-        setTasks(response.data);
-      } catch (error) {
-        console.error("Error fetching task: ", error);
-      }
-    };
-    fetchTasks();
+    const token = localStorage.getItem("token");
+    if (token) {
+      setIsAuthenticated(true);
+    }
   }, []);
+
+  const handleAuthSuccess = () => {
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    setIsAuthenticated(false);
+  };
 
   const handleTaskInput = async (e) => {
     e.preventDefault();
@@ -130,64 +138,114 @@ function App() {
 
   return (
     <div className="container">
-      <h1 className="heading">Task Manager</h1>
+      <header>
+        <h1 className="heading">Task Manager</h1>
+        {isAuthenticated && (
+          <button
+            onClick={handleLogout}
+            style={{
+              padding: "8px 12px",
+              backgroundColor: "#dc3545",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+            }}
+          >
+            Logout
+          </button>
+        )}
+      </header>
+      {isAuthenticated ? (
+        <>
+          <TaskStats tasks={tasks} />
+          {/* input form */}
+          <TaskForm
+            taskInput={taskInput}
+            setTaskInput={setTaskInput}
+            onAddTask={handleTaskInput}
+            categoryInput={categoryInput}
+            setCategoryInput={setCategoryInput}
+            dateInput={dateInput}
+            setDateInput={setDateInput}
+          />
+          {/* Filter buttons Control Panel*/}
+          <SearchBar
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+          />
+          <div className="controls-row">
+            <div className="filter-container">
+              <button
+                className={`filter-btn ${filter === "all" ? "active-filter" : ""}`}
+                onClick={() => setFilter("all")}
+              >
+                All
+              </button>
+              <button
+                className={`filter-btn ${filter === "active" ? "active-filter" : ""}`}
+                onClick={() => setFilter("active")}
+              >
+                Active
+              </button>
+              <button
+                className={`filter-btn ${filter === "completed" ? "active-filter" : ""}`}
+                onClick={() => setFilter("completed")}
+              >
+                Completed
+              </button>
+            </div>
+            <div className="sort-container">
+              <label htmlFor="sort-select" className="sort-label-text">
+                Sort By:{" "}
+              </label>
+              <select
+                id="sort-select"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="sort-select"
+              >
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+              </select>
+            </div>
+          </div>
+          {/* Task list */}
+          <TaskList
+            tasks={processedTasks}
+            onToggleComplete={handleTaskComplete}
+            onDeleteTask={handleDeleteTask}
+            onUpdateTask={handleUpdateTask}
+          />
+        </>
+      ) : (
+        <div style={{ marginBottom: "20px" }}>
+          {showRegister ? (
+            <Register onRegisterSuccess={handleAuthSuccess} />
+          ) : (
+            <Login onLoginSuccess={handleAuthSuccess} />
+          )}
 
-      <TaskStats tasks={tasks} />
-      {/* input form */}
-      <TaskForm
-        taskInput={taskInput}
-        setTaskInput={setTaskInput}
-        onAddTask={handleTaskInput}
-        categoryInput={categoryInput}
-        setCategoryInput={setCategoryInput}
-        dateInput={dateInput}
-        setDateInput={setDateInput}
-      />
-      {/* Filter buttons Control Panel*/}
-      <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
-      <div className="controls-row">
-        <div className="filter-container">
-          <button
-            className={`filter-btn ${filter === "all" ? "active-filter" : ""}`}
-            onClick={() => setFilter("all")}
-          >
-            All
-          </button>
-          <button
-            className={`filter-btn ${filter === "active" ? "active-filter" : ""}`}
-            onClick={() => setFilter("active")}
-          >
-            Active
-          </button>
-          <button
-            className={`filter-btn ${filter === "completed" ? "active-filter" : ""}`}
-            onClick={() => setFilter("completed")}
-          >
-            Completed
-          </button>
+          <p style={{ textAlign: "center", marginTop: "15px" }}>
+            {showRegister
+              ? "Already have an account? "
+              : "Don't have an account? "}
+            <button
+              onClick={() => setShowRegister(!showRegister)}
+              style={{
+                background: "none",
+                border: "none",
+                color: "#007bff",
+                cursor: "pointer",
+                textDecoration: "underline",
+                padding: 0,
+              }}
+            >
+              {showRegister ? "Login here" : "Register here"}
+            </button>
+          </p>
         </div>
-        <div className="sort-container">
-          <label htmlFor="sort-select" className="sort-label-text">
-            Sort By:{" "}
-          </label>
-          <select
-            id="sort-select"
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="sort-select"
-          >
-            <option value="newest">Newest First</option>
-            <option value="oldest">Oldest First</option>
-          </select>
-        </div>
-      </div>
-      {/* Task list */}
-      <TaskList
-        tasks={processedTasks}
-        onToggleComplete={handleTaskComplete}
-        onDeleteTask={handleDeleteTask}
-        onUpdateTask={handleUpdateTask}
-      />
+      )}
     </div>
   );
 }
