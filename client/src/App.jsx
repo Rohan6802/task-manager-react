@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
+import { useState } from "react";
+// import axios from "axios";
 import TaskForm from "./components/tasks/TaskForm";
 import TaskList from "./components/tasks/TaskList";
 import SearchBar from "./components/tasks/SearchBar";
@@ -7,8 +7,9 @@ import TaskStats from "./components/tasks/TaskStats";
 import Login from "./components/auth/Login";
 import Register from "./components/auth/Register";
 import "./App.css";
+import API from "./api";
 
-const API_URL = "http://localhost:5000/api/tasks";
+// const API_URL = "http://localhost:5000/api/tasks";
 
 function App() {
   const [tasks, setTasks] = useState([]);
@@ -18,15 +19,10 @@ function App() {
   const [filter, setFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("Newest");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return !!localStorage.getItem("token");
+  });
   const [showRegister, setShowRegister] = useState(false);
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      setIsAuthenticated(true);
-    }
-  }, []);
 
   const handleAuthSuccess = () => {
     setIsAuthenticated(true);
@@ -42,32 +38,23 @@ function App() {
 
     if (taskInput.trim() === "") return;
 
-    const now = new Date();
-    const formattedCreatedDate = now.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-
-    const newTaskData = {
-      id: Date.now(),
-      text: taskInput,
-      category: categoryInput,
-      dueDate: dateInput,
-      createdAt: formattedCreatedDate,
-      completed: false,
-    };
-
     try {
-      const response = await axios.post(API_URL, newTaskData);
-      if (response.data) {
-        setTasks([...tasks, response.data]);
-      }
+      const response = await API.post("/tasks", {
+        text: taskInput,
+        category: categoryInput || "Personal",
+        dueDate: dateInput || null,
+      });
+
+      setTasks([...tasks, response.data]);
+
       setTaskInput("");
       setCategoryInput("Personal");
       setDateInput("");
     } catch (error) {
-      console.error("Error creating task: ", error);
+      console.error(
+        "Error creating task: ",
+        error.response?.data?.message || error.message,
+      );
     }
   };
 
@@ -76,34 +63,37 @@ function App() {
     if (!targetTask) return;
 
     try {
-      await axios.put(`${API_URL}/${idToToggle}`, {
+      const response = await API.put(`/tasks/${idToToggle}`, {
         completed: !targetTask.completed,
       });
 
-      const updatedTasks = tasks.map((task) =>
-        task._id === idToToggle
-          ? { ...task, completed: !task.completed }
-          : task,
+      setTasks(
+        tasks.map((task) => (task._id === idToToggle ? response.data : task)),
       );
-      setTasks(updatedTasks);
     } catch (error) {
-      console.error("Error updating task status: ", error);
+      console.error(
+        "Error updating task status: ",
+        error.response?.data?.message || error.message,
+      );
     }
   };
 
   const handleDeleteTask = async (idToDelete) => {
     try {
-      await axios.delete(`${API_URL}/${idToDelete}`);
-      const updatedTasks = tasks.filter((task) => task._id !== idToDelete);
-      setTasks(updatedTasks);
+      await API.delete(`/tasks/${idToDelete}`);
+
+      setTasks(tasks.filter((task) => task._id !== idToDelete));
     } catch (error) {
-      console.error("Error deleting task: ", error);
+      console.error(
+        "Error deleting task: ",
+        error.response?.data?.message || error.message,
+      );
     }
   };
 
   const handleUpdateTask = async (idToUpdate, newText) => {
     try {
-      const response = await axios.put(`${API_URL}/${idToUpdate}`, {
+      const response = await API.put(`/tasks/${idToUpdate}`, {
         text: newText,
       });
       const updatedTasks = tasks.map((task) =>
