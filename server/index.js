@@ -14,7 +14,7 @@ connetDB();
 
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://task-manager-react-three-kappa.vercel.app/",
+  "https://task-manager-react-three-kappa.vercel.app",
 ];
 
 app.use(
@@ -32,8 +32,6 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
-
-app.options("(.*)", cors()); // Enable pre-flight for all routes
 
 app.use(express.json());
 
