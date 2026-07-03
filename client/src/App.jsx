@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 // import axios from "axios";
 import TaskForm from "./components/tasks/TaskForm";
 import TaskList from "./components/tasks/TaskList";
@@ -8,8 +8,6 @@ import Login from "./components/auth/Login";
 import Register from "./components/auth/Register";
 import "./App.css";
 import API from "./api";
-
-// const API_URL = "http://localhost:5000/api/tasks";
 
 function App() {
   const [tasks, setTasks] = useState([]);
@@ -23,6 +21,23 @@ function App() {
     return !!localStorage.getItem("token");
   });
   const [showRegister, setShowRegister] = useState(false);
+
+  useEffect(() => {
+    const fetchUserTasks = async () => {
+      if (!isAuthenticated) return;
+      try {
+        const response = await API.get("/tasks");
+
+        setTasks(response.data);
+      } catch (error) {
+        console.error(
+          "Error fetching tasks: ",
+          error.response?.data?.message || error.message,
+        );
+      }
+    };
+    fetchUserTasks();
+  }, [isAuthenticated]);
 
   const handleAuthSuccess = () => {
     setIsAuthenticated(true);

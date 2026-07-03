@@ -126,7 +126,7 @@ function TaskItem({ task, onToggleComplete, onDeleteTask, onUpdateTask }) {
           <>
             <button
               onClick={() => setIsEditing(true)}
-              className="editButton"
+              className="editButton actionButtons"
               disabled={task.completed}
               style={{
                 backgroundColor: "#008CBA",
@@ -141,7 +141,7 @@ function TaskItem({ task, onToggleComplete, onDeleteTask, onUpdateTask }) {
             </button>
             <button
               onClick={() => onDeleteTask(task._id)}
-              className="deleteButton"
+              className="deleteButton actionButtons"
             >
               Delete
             </button>
