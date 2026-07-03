@@ -12,6 +12,8 @@ const PORT = process.env.PORT || 5000;
 
 connetDB();
 
+const cors = require("cors");
+
 const allowedOrigins = [
   "http://localhost:3000",
   "https://task-manager-react-three-kappa.vercel.app/",
@@ -28,8 +30,12 @@ app.use(
       return callback(null, true);
     },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
+
+app.options("*", cors()); // Enable pre-flight for all routes
 
 app.use(express.json());
 
